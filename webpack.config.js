@@ -4,15 +4,17 @@ const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 
 module.exports = {
     mode: "production",
-    entry: './src/script.js',
+    entry: './src/index.js',
     output: {
         filename: "bundle.js",
         path: path.resolve(__dirname, "build")
     },
+    devServer:{
+        port: 4200,
+    },
     plugins: [
         new HTMLWebpackPlugin({
-            title:"Azyabat",
-            template: "./src/index.html"
+            template: "./index.html"
         }),
         new CleanWebpackPlugin()
     ],
