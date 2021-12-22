@@ -1,13 +1,13 @@
-class MouseHelper {
+class Mouse {
   constructor() {
     this.x = undefined;
     this.y = undefined;
   }
 
-  setNewCursorPosition(position) {
-    this.x = position[0];
-    this.y = position[1];
+  setPosition(x, y) {
+    this.x = x;
+    this.y = y;
   }
 }
 
-export default new MouseHelper();
+export default new Mouse();

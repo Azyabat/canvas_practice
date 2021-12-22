@@ -20,6 +20,7 @@
         "no-param-reassign":"off",
         "symbol-description":"off",
         "prefer-destructuring":"off",
-        "class-methods-use-this":"off"
+        "class-methods-use-this":"off",
+        "no-console":"error"
     }
 }
