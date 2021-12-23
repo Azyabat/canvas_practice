@@ -10,12 +10,8 @@ const widthCanvas = window.innerWidth - 40;
 const heightCanvas = window.innerHeight - 40;
 const polygonCollection = [];
 
-function clearCanvas() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
 function render() {
-  clearCanvas();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   polygonCollection.forEach((polygon) => {
     polygon.draw(ctx);
@@ -40,11 +36,7 @@ function render() {
     const y = event.offsetY;
 
     polygonCollection.forEach((polygon) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      polygon.draw(ctx);
-      const isInside = ctx.isPointInPath(x, y);
-
-      render();
+      const isInside = PolygonHelper.isPointInPolygon(polygon, { x, y });
 
       if (isInside) {
         Mouse.setPosition(x, y);
@@ -73,7 +65,7 @@ function render() {
       return;
     }
 
-    PolygonHelper.isPolygonCross(polygonCollection, selectedPolygon, ctx, clearCanvas);
+    PolygonHelper.isPolygonCross(polygonCollection, selectedPolygon);
 
     render();
 

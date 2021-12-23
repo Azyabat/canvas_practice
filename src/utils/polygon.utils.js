@@ -1,4 +1,16 @@
 class PolygonHelper {
+  isPointInPolygon(polygon, inspectingPosition) {
+    const isPointInsidePolygon = polygon.edgeCollection.every((edge) => {
+      const isInside =
+        (inspectingPosition.x - edge.start.x) * (edge.end.y - edge.start.y) -
+        (inspectingPosition.y - edge.start.y) * (edge.end.x - edge.start.x);
+
+      return isInside < 0;
+    });
+
+    return !!isPointInsidePolygon;
+  }
+
   isCrossLines(firstLine, secondLine) {
     const x1 = firstLine.start.x;
     const y1 = firstLine.start.y;
@@ -26,56 +38,46 @@ class PolygonHelper {
     return false;
   }
 
-  isPolygonOwnPolygon(polygonCollection, selectedPolygon, ctx, clearCanvas) {
+  isPolygonOwnPolygon(polygon, selectedPolygon) {
     let isOwn = false;
 
-    polygonCollection.forEach((polygon) => {
-      if (selectedPolygon.uuid === polygon.uuid) {
-        return;
-      }
-
-      clearCanvas();
-      polygon.draw(ctx);
-
-      isOwn = selectedPolygon.dots.some((selectedPolygonPosition) => {
-        return ctx.isPointInPath(selectedPolygonPosition.x, selectedPolygonPosition.y);
-      });
-
-      if (!isOwn) {
-        clearCanvas();
-        selectedPolygon.draw(ctx);
-
-        isOwn = polygon.dots.some((polygonDotPosition) => {
-          return ctx.isPointInPath(polygonDotPosition.x, polygonDotPosition.y);
-        });
-      }
-
-      if (isOwn) {
-        polygon.intersectedCollection.add(selectedPolygon.uuid);
-        selectedPolygon.intersectedCollection.add(polygon.uuid);
-      }
+    isOwn = selectedPolygon.dots.every((selectedPolygonPosition) => {
+      return this.isPointInPolygon(polygon, { x: selectedPolygonPosition.x, y: selectedPolygonPosition.y });
     });
+
+    if (!isOwn) {
+      isOwn = polygon.dots.every((polygonDotPosition) => {
+        return this.isPointInPolygon(selectedPolygon, { x: polygonDotPosition.x, y: polygonDotPosition.y });
+      });
+    }
+
+    if (isOwn) {
+      polygon.intersectedCollection.add(selectedPolygon.uuid);
+      selectedPolygon.intersectedCollection.add(polygon.uuid);
+    }
+
+    return isOwn;
   }
 
-  isPolygonCross(polygonCollection, selectedPolygon, ctx, clearCanvas) {
+  isPolygonCross(polygonCollection, selectedPolygon) {
     polygonCollection.forEach((polygon) => {
       let isCross = false;
       if (polygon.uuid === selectedPolygon.uuid) {
-        return 0;
+        return;
       }
 
-      polygon.edgeCollection.forEach((firstEdge, index) => {
+      polygon.edgeCollection.forEach((firstEdge) => {
         if (isCross) {
           return;
         }
         isCross = selectedPolygon.edgeCollection.some((secondEdge) => {
           return this.isCrossLines(firstEdge, secondEdge);
         });
-
-        if (index === polygon.edgeCollection.length - 1 && !isCross) {
-          isCross = this.isPolygonOwnPolygon(polygonCollection, selectedPolygon, ctx, clearCanvas);
-        }
       });
+
+      if (!isCross) {
+        isCross = this.isPolygonOwnPolygon(polygon, selectedPolygon);
+      }
 
       if (isCross) {
         polygon.intersectedCollection.add(selectedPolygon.uuid);

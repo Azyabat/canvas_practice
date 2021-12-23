@@ -4,7 +4,6 @@ class Polygon {
   constructor(dots) {
     this.uuid = Symbol();
     this.dots = dots;
-    this.isIntersected = false;
     this.edgeCollection = LinesUtils.getLines(dots);
     this.intersectedCollection = new Set();
   }
