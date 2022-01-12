@@ -3,6 +3,7 @@ import PolygonHelper from './utils/polygon.utils';
 import Mouse from './utils/mouse.utils';
 import jsonData from '../config/data.json';
 import '../styles/styles.css';
+import { bufferDistance } from './utils/const';
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -35,6 +36,8 @@ function render() {
     const x = event.offsetX;
     const y = event.offsetY;
 
+    Mouse.setDownPosition(x, y);
+
     polygonCollection.forEach((polygon) => {
       const isInside = PolygonHelper.isPointInPolygon(polygon, { x, y });
 
@@ -56,18 +59,48 @@ function render() {
     const differenceY = newY - Mouse.y;
 
     selectedPolygon.move(differenceX, differenceY);
+    PolygonHelper.isPolygonCross(polygonCollection, selectedPolygon);
+    PolygonHelper.isNeedSnap(selectedPolygon, polygonCollection);
     Mouse.setPosition(newX, newY);
+
+    if (selectedPolygon.isSnapedY) {
+      if (Mouse.downPositionY - Mouse.y > bufferDistance) {
+        selectedPolygon.move(0, -30);
+        selectedPolygon.isSnapedY = 0;
+      } else if (Mouse.downPositionY - Mouse.y < -bufferDistance) {
+        selectedPolygon.move(0, 30);
+        selectedPolygon.isSnapedY = 0;
+      }
+    }
+
+    if (selectedPolygon.isSnapedX) {
+      if (Mouse.downPositionX - Mouse.x > bufferDistance) {
+        selectedPolygon.move(-30, 0);
+        selectedPolygon.isSnapedX = 0;
+        selectedPolygon.snapedPolygon = undefined;
+      } else if (Mouse.downPositionX - Mouse.x < -bufferDistance) {
+        selectedPolygon.move(30, 0);
+        selectedPolygon.isSnapedX = 0;
+        selectedPolygon.snapedPolygon = undefined;
+      }
+    }
+
     render();
   };
 
-  canvas.onmouseup = () => {
+  canvas.onmouseup = (event) => {
     if (!selectedPolygon) {
       return;
     }
 
-    PolygonHelper.isPolygonCross(polygonCollection, selectedPolygon);
+    if (selectedPolygon.isIntersected) {
+      const newX = Mouse.downPositionX - event.offsetX;
+      const newY = Mouse.downPositionY - event.offsetY;
 
-    render();
+      selectedPolygon.move(newX, newY);
+      PolygonHelper.isPolygonCross(polygonCollection, selectedPolygon);
+      render();
+    }
 
     selectedPolygon = undefined;
   };
