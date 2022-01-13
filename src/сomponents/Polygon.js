@@ -8,8 +8,8 @@ class Polygon {
     this.edgeCollection = LinesHelper.getLines(dots);
     this.isIntersected = false;
     this.buffers = isBufferPolygon ? undefined : PolygonHelper.getBuffers(this.edgeCollection);
-    this.isSnapedX = 0;
-    this.isSnapedY = 0;
+    this.snapDirectionX = 0;
+    this.snapDirectionY = 0;
     this.snapedPolygon = undefined;
   }
 
@@ -34,44 +34,10 @@ class Polygon {
   }
 
   move(differentX, differentY) {
-    let newDifferentX = differentX;
-    let newDifferentY = differentY;
+    let newDifferentX = PolygonHelper.getDifferentPosition(this.snapDirectionX, differentX);
+    let newDifferentY = PolygonHelper.getDifferentPosition(this.snapDirectionY, differentY);
 
-    if (
-      this.isSnapedX !== 0 &&
-      ((this.isSnapedX > 0 && differentX > 0) ||
-        (this.isSnapedX < 0 && differentX < 0) ||
-        (this.isSnapedX > 0 && differentX < 0) ||
-        (this.isSnapedX < 0 && differentX > 0 && (differentX !== 30 || differentX !== -30)))
-    ) {
-      newDifferentX = 0;
-    }
-
-    if (
-      (this.isSnapedX < 0 && differentX > 0 && differentX === 30) ||
-      (this.isSnapedX > 0 && differentX < 0 && differentX === -30)
-    ) {
-      newDifferentX = differentX;
-    }
-
-    if (
-      this.isSnapedY !== 0 &&
-      ((this.isSnapedY > 0 && differentY > 0) ||
-        (this.isSnapedY < 0 && differentY < 0) ||
-        (this.isSnapedY > 0 && differentY < 0) ||
-        (this.isSnapedY < 0 && differentY > 0 && (differentY !== 30 || differentY !== -30)))
-    ) {
-      newDifferentY = 0;
-    }
-
-    if (
-      (this.isSnapedY < 0 && differentY > 0 && differentY === 30) ||
-      (this.isSnapedY > 0 && differentY < 0 && differentY === -30)
-    ) {
-      newDifferentY = differentY;
-    }
-
-    if (this.isSnapedY !== 0) {
+    if (this.snapDirectionY !== 0) {
       const mayMoveX = PolygonHelper.isMayMove(this, this.snapedPolygon, 'X', newDifferentX);
 
       if (!mayMoveX) {
@@ -79,7 +45,7 @@ class Polygon {
       }
     }
 
-    if (this.isSnapedX !== 0) {
+    if (this.snapDirectionX !== 0) {
       const mayMoveY = PolygonHelper.isMayMove(this, this.snapedPolygon, 'Y', newDifferentY);
 
       if (!mayMoveY) {

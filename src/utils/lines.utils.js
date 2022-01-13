@@ -27,10 +27,10 @@ class LinesUtils {
       return { start: startPostion, end: endPosition };
     });
 
-    result.right = lines.filter((line) => line.start.x === maxX && line.end.x === maxX)[0];
-    result.left = lines.filter((line) => line.start.x === minX && line.end.x === minX)[0];
-    result.bottom = lines.filter((line) => line.start.y === maxY && line.end.y === maxY)[0];
-    result.top = lines.filter((line) => line.start.y === minY && line.end.y === minY)[0];
+    result.right = lines.find((line) => line.start.x === maxX && line.end.x === maxX);
+    result.left = lines.find((line) => line.start.x === minX && line.end.x === minX);
+    result.bottom = lines.find((line) => line.start.y === maxY && line.end.y === maxY);
+    result.top = lines.find((line) => line.start.y === minY && line.end.y === minY);
     result.lines = lines;
 
     return result;

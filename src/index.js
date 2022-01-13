@@ -2,8 +2,8 @@ import Polygon from './сomponents/Polygon';
 import PolygonHelper from './utils/polygon.utils';
 import Mouse from './utils/mouse.utils';
 import jsonData from '../config/data.json';
+import { BUFFER_DISTANCE } from './utils/const';
 import '../styles/styles.css';
-import { bufferDistance } from './utils/const';
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -59,28 +59,33 @@ function render() {
     const differenceY = newY - Mouse.y;
 
     selectedPolygon.move(differenceX, differenceY);
-    PolygonHelper.isPolygonCross(polygonCollection, selectedPolygon);
-    PolygonHelper.isNeedSnap(selectedPolygon, polygonCollection);
+    PolygonHelper.findPolygonIntersection(polygonCollection, selectedPolygon);
+
+    if (!selectedPolygon.snapDirectionX && !selectedPolygon.snapDirectionY) {
+      Mouse.setDownPosition(Mouse.x, Mouse.y);
+    }
+
+    PolygonHelper.findSnap(selectedPolygon, polygonCollection);
     Mouse.setPosition(newX, newY);
 
-    if (selectedPolygon.isSnapedY) {
-      if (Mouse.downPositionY - Mouse.y > bufferDistance) {
+    if (selectedPolygon.snapDirectionY) {
+      if (Mouse.downPositionY - Mouse.y > BUFFER_DISTANCE) {
         selectedPolygon.move(0, -30);
-        selectedPolygon.isSnapedY = 0;
-      } else if (Mouse.downPositionY - Mouse.y < -bufferDistance) {
+        selectedPolygon.snapDirectionY = 0;
+      } else if (Mouse.downPositionY - Mouse.y < -BUFFER_DISTANCE) {
         selectedPolygon.move(0, 30);
-        selectedPolygon.isSnapedY = 0;
+        selectedPolygon.snapDirectionY = 0;
       }
     }
 
-    if (selectedPolygon.isSnapedX) {
-      if (Mouse.downPositionX - Mouse.x > bufferDistance) {
+    if (selectedPolygon.snapDirectionX) {
+      if (Mouse.downPositionX - Mouse.x > BUFFER_DISTANCE) {
         selectedPolygon.move(-30, 0);
-        selectedPolygon.isSnapedX = 0;
+        selectedPolygon.snapDirectionX = 0;
         selectedPolygon.snapedPolygon = undefined;
-      } else if (Mouse.downPositionX - Mouse.x < -bufferDistance) {
+      } else if (Mouse.downPositionX - Mouse.x < -BUFFER_DISTANCE) {
         selectedPolygon.move(30, 0);
-        selectedPolygon.isSnapedX = 0;
+        selectedPolygon.snapDirectionX = 0;
         selectedPolygon.snapedPolygon = undefined;
       }
     }
@@ -98,7 +103,8 @@ function render() {
       const newY = Mouse.downPositionY - event.offsetY;
 
       selectedPolygon.move(newX, newY);
-      PolygonHelper.isPolygonCross(polygonCollection, selectedPolygon);
+      PolygonHelper.findPolygonIntersection(polygonCollection, selectedPolygon);
+
       render();
     }
 

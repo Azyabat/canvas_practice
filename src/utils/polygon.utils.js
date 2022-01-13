@@ -1,6 +1,5 @@
 import Polygon from '../сomponents/Polygon';
-import { bufferDistance } from './const';
-import Mouse from './mouse.utils';
+import { BUFFER_DISTANCE, SNAPPING_TOLERANCE } from './const';
 
 class PolygonHelper {
   isPointInPolygon(polygon, inspectingPosition) {
@@ -58,7 +57,7 @@ class PolygonHelper {
     return isOwn;
   }
 
-  isCrossing(selectedPolygon, inscpectedPolygon) {
+  isPolygonCrossing(selectedPolygon, inscpectedPolygon) {
     let isCross = false;
 
     inscpectedPolygon.edgeCollection.lines.forEach((firstEdge) => {
@@ -78,7 +77,7 @@ class PolygonHelper {
     return isCross;
   }
 
-  isPolygonCross(polygonCollection, selectedPolygon) {
+  findPolygonIntersection(polygonCollection, selectedPolygon) {
     let isCrossSelectedPolygon = false;
 
     polygonCollection.forEach((polygon) => {
@@ -86,7 +85,7 @@ class PolygonHelper {
         return;
       }
 
-      const isCross = this.isCrossing(selectedPolygon, polygon);
+      const isCross = this.isPolygonCrossing(selectedPolygon, polygon);
 
       polygon.isIntersected = isCross;
 
@@ -106,37 +105,37 @@ class PolygonHelper {
 
     const leftBuffer = new Polygon(
       [
-        { x: leftEdge.start.x, y: leftEdge.start.y - 2 },
-        { x: leftEdge.start.x - bufferDistance, y: leftEdge.start.y - 2 },
-        { x: leftEdge.end.x - bufferDistance, y: leftEdge.end.y + 2 },
-        { x: leftEdge.end.x, y: leftEdge.end.y + 2 },
+        { x: leftEdge.start.x, y: leftEdge.start.y - SNAPPING_TOLERANCE },
+        { x: leftEdge.start.x - BUFFER_DISTANCE, y: leftEdge.start.y - SNAPPING_TOLERANCE },
+        { x: leftEdge.end.x - BUFFER_DISTANCE, y: leftEdge.end.y + SNAPPING_TOLERANCE },
+        { x: leftEdge.end.x, y: leftEdge.end.y + SNAPPING_TOLERANCE },
       ],
       true
     );
     const rightBuffer = new Polygon(
       [
-        { x: rightEdge.start.x, y: rightEdge.start.y + 2 },
-        { x: rightEdge.start.x + bufferDistance, y: rightEdge.start.y + 2 },
-        { x: rightEdge.end.x + bufferDistance, y: rightEdge.end.y - 2 },
-        { x: rightEdge.end.x, y: rightEdge.end.y - 2 },
+        { x: rightEdge.start.x, y: rightEdge.start.y + SNAPPING_TOLERANCE },
+        { x: rightEdge.start.x + BUFFER_DISTANCE, y: rightEdge.start.y + SNAPPING_TOLERANCE },
+        { x: rightEdge.end.x + BUFFER_DISTANCE, y: rightEdge.end.y - SNAPPING_TOLERANCE },
+        { x: rightEdge.end.x, y: rightEdge.end.y - SNAPPING_TOLERANCE },
       ],
       true
     );
     const topBuffer = new Polygon(
       [
-        { x: topEdge.start.x + 2, y: topEdge.start.y },
-        { x: topEdge.start.x + 2, y: topEdge.start.y - bufferDistance },
-        { x: topEdge.end.x - 2, y: topEdge.end.y - bufferDistance },
-        { x: topEdge.end.x - 2, y: topEdge.end.y },
+        { x: topEdge.start.x + SNAPPING_TOLERANCE, y: topEdge.start.y },
+        { x: topEdge.start.x + SNAPPING_TOLERANCE, y: topEdge.start.y - BUFFER_DISTANCE },
+        { x: topEdge.end.x - SNAPPING_TOLERANCE, y: topEdge.end.y - BUFFER_DISTANCE },
+        { x: topEdge.end.x - SNAPPING_TOLERANCE, y: topEdge.end.y },
       ],
       true
     );
     const bottomBuffer = new Polygon(
       [
-        { x: bottomEdge.start.x - 2, y: bottomEdge.start.y },
-        { x: bottomEdge.start.x - 2, y: bottomEdge.start.y + bufferDistance },
-        { x: bottomEdge.end.x + 2, y: bottomEdge.end.y + bufferDistance },
-        { x: bottomEdge.end.x + 2, y: bottomEdge.end.y },
+        { x: bottomEdge.start.x - SNAPPING_TOLERANCE, y: bottomEdge.start.y },
+        { x: bottomEdge.start.x - SNAPPING_TOLERANCE, y: bottomEdge.start.y + BUFFER_DISTANCE },
+        { x: bottomEdge.end.x + SNAPPING_TOLERANCE, y: bottomEdge.end.y + BUFFER_DISTANCE },
+        { x: bottomEdge.end.x + SNAPPING_TOLERANCE, y: bottomEdge.end.y },
       ],
       true
     );
@@ -144,64 +143,98 @@ class PolygonHelper {
     return { left: leftBuffer, right: rightBuffer, top: topBuffer, bottom: bottomBuffer };
   }
 
-  isNeedSnap(selectedPolygon, polygonCollection) {
+  findSnap(selectedPolygon, polygonCollection) {
     let isRightSnap;
     let isLeftSnap;
     let isTopSnap;
-    let isBottomSnap = false;
+    let isBottomSnap;
 
-    if (selectedPolygon.isSnapedX !== 0 || selectedPolygon.isSnapedY !== 0) {
+    if (selectedPolygon.snapDirectionX !== 0 || selectedPolygon.snapDirectionY !== 0) {
       return;
     }
 
-    polygonCollection.forEach((polygon) => {
+    for (const polygon of polygonCollection) {
       if (selectedPolygon.uuid === polygon.uuid) {
-        return;
+        continue;
       }
 
-      isRightSnap = this.isCrossing(selectedPolygon.buffers.right, polygon);
-      isLeftSnap = this.isCrossing(selectedPolygon.buffers.left, polygon);
-      isTopSnap = this.isCrossing(selectedPolygon.buffers.top, polygon);
-      isBottomSnap = this.isCrossing(selectedPolygon.buffers.bottom, polygon);
-
-      !selectedPolygon.isSnapedX && !selectedPolygon.isSnapedY && Mouse.setDownPosition(Mouse.x, Mouse.y);
+      isRightSnap = this.isPolygonCrossing(selectedPolygon.buffers.right, polygon);
+      isLeftSnap = this.isPolygonCrossing(selectedPolygon.buffers.left, polygon);
+      isTopSnap = this.isPolygonCrossing(selectedPolygon.buffers.top, polygon);
+      isBottomSnap = this.isPolygonCrossing(selectedPolygon.buffers.bottom, polygon);
 
       if (isRightSnap || isLeftSnap || isTopSnap || isBottomSnap) {
         selectedPolygon.snapedPolygon = polygon;
       }
 
       if (isRightSnap) {
-        const differenceX = polygon.edgeCollection.left.start.x - selectedPolygon.edgeCollection.right.start.x - 2;
+        const differenceX =
+          polygon.edgeCollection.left.start.x - selectedPolygon.edgeCollection.right.start.x - SNAPPING_TOLERANCE;
         selectedPolygon.move(differenceX, 0);
 
-        selectedPolygon.isSnapedX = 1;
-        selectedPolygon.isSnapedY = 0;
+        selectedPolygon.snapDirectionX = 1;
+        selectedPolygon.snapDirectionY = 0;
+
+        return;
       }
 
       if (isLeftSnap) {
-        const differenceX = polygon.edgeCollection.right.start.x - selectedPolygon.edgeCollection.left.start.x + 2;
+        const differenceX =
+          polygon.edgeCollection.right.start.x - selectedPolygon.edgeCollection.left.start.x + SNAPPING_TOLERANCE;
         selectedPolygon.move(differenceX, 0);
 
-        selectedPolygon.isSnapedX = -1;
-        selectedPolygon.isSnapedY = 0;
+        selectedPolygon.snapDirectionX = -1;
+        selectedPolygon.snapDirectionY = 0;
+
+        return;
       }
 
       if (isTopSnap) {
-        const differenceY = polygon.edgeCollection.bottom.start.y - selectedPolygon.edgeCollection.top.start.y + 2;
+        const differenceY =
+          polygon.edgeCollection.bottom.start.y - selectedPolygon.edgeCollection.top.start.y + SNAPPING_TOLERANCE;
         selectedPolygon.move(0, differenceY);
 
-        selectedPolygon.isSnapedY = -1;
-        selectedPolygon.isSnapedX = 0;
+        selectedPolygon.snapDirectionY = -1;
+        selectedPolygon.snapDirectionX = 0;
+
+        return;
       }
 
       if (isBottomSnap) {
-        const differenceY = polygon.edgeCollection.top.start.y - selectedPolygon.edgeCollection.bottom.start.y - 2;
+        const differenceY =
+          polygon.edgeCollection.top.start.y - selectedPolygon.edgeCollection.bottom.start.y - SNAPPING_TOLERANCE;
         selectedPolygon.move(0, differenceY);
 
-        selectedPolygon.isSnapedY = 1;
-        selectedPolygon.isSnapedX = 0;
+        selectedPolygon.snapDirectionY = 1;
+        selectedPolygon.snapDirectionX = 0;
+
+        return;
       }
-    });
+    }
+  }
+
+  isPossibilityMove(firstPolygon, secondPolygon, direction, differentNumber) {
+    if (direction === 'X') {
+      if (
+        firstPolygon.edgeCollection.left.start.x + differentNumber > secondPolygon.edgeCollection.left.start.x ||
+        firstPolygon.edgeCollection.right.start.x + differentNumber < secondPolygon.edgeCollection.right.start.x
+      ) {
+        return false;
+      }
+
+      return true;
+    }
+
+    if (direction === 'Y') {
+      if (
+        firstPolygon.edgeCollection.top.start.y + differentNumber > secondPolygon.edgeCollection.top.start.y ||
+        firstPolygon.edgeCollection.bottom.start.y + differentNumber < secondPolygon.edgeCollection.bottom.start.y
+      ) {
+        return false;
+      }
+
+      return true;
+    }
   }
 
   isMayMove(selectedPolygon, snappedPolygon, direction, differentNumber) {
@@ -211,20 +244,9 @@ class PolygonHelper {
       const lengthSnappedPolygon = snappedPolygon.edgeCollection.top.end.x - snappedPolygon.edgeCollection.top.start.x;
 
       if (lengthSelectedPolygon > lengthSnappedPolygon) {
-        if (
-          selectedPolygon.edgeCollection.left.start.x + differentNumber > snappedPolygon.edgeCollection.left.start.x ||
-          selectedPolygon.edgeCollection.right.start.x + differentNumber < snappedPolygon.edgeCollection.right.start.x
-        ) {
-          return false;
-        }
-      } else if (
-        selectedPolygon.edgeCollection.left.start.x + differentNumber < snappedPolygon.edgeCollection.left.start.x ||
-        selectedPolygon.edgeCollection.right.start.x + differentNumber > snappedPolygon.edgeCollection.right.start.x
-      ) {
-        return false;
+        return this.isPossibilityMove(selectedPolygon, snappedPolygon, 'X', differentNumber);
       }
-
-      return true;
+      return this.isPossibilityMove(snappedPolygon, selectedPolygon, 'X', differentNumber);
     }
 
     if (direction === 'Y') {
@@ -234,21 +256,33 @@ class PolygonHelper {
         snappedPolygon.edgeCollection.right.end.y - snappedPolygon.edgeCollection.right.start.y;
 
       if (lengthSelectedPolygon > lengthSnappedPolygon) {
-        if (
-          selectedPolygon.edgeCollection.top.start.y + differentNumber > snappedPolygon.edgeCollection.top.start.y ||
-          selectedPolygon.edgeCollection.bottom.start.y + differentNumber < snappedPolygon.edgeCollection.bottom.start.y
-        ) {
-          return false;
-        }
-      } else if (
-        selectedPolygon.edgeCollection.top.start.y + differentNumber < snappedPolygon.edgeCollection.top.start.y ||
-        selectedPolygon.edgeCollection.bottom.start.y + differentNumber > snappedPolygon.edgeCollection.bottom.start.y
-      ) {
-        return false;
+        return this.isPossibilityMove(selectedPolygon, snappedPolygon, 'Y', differentNumber);
       }
-
-      return true;
+      return this.isPossibilityMove(snappedPolygon, selectedPolygon, 'Y', differentNumber);
     }
+  }
+
+  getDifferentPosition(snapDirection, differentNumber) {
+    let newDifferentNumber = differentNumber;
+
+    if (
+      snapDirection !== 0 &&
+      ((snapDirection > 0 && differentNumber > 0) ||
+        (snapDirection < 0 && differentNumber < 0) ||
+        (snapDirection > 0 && differentNumber < 0) ||
+        (snapDirection < 0 && differentNumber > 0 && (differentNumber !== 30 || differentNumber !== -30)))
+    ) {
+      newDifferentNumber = 0;
+    }
+
+    if (
+      (snapDirection < 0 && differentNumber > 0 && differentNumber === 30) ||
+      (snapDirection > 0 && differentNumber < 0 && differentNumber === -30)
+    ) {
+      newDifferentNumber = differentNumber;
+    }
+
+    return newDifferentNumber;
   }
 }
 
