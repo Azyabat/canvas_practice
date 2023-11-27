@@ -21,6 +21,8 @@
         "symbol-description":"off",
         "prefer-destructuring":"off",
         "class-methods-use-this":"off",
-        "no-console":"error"
+        "no-console":"error",
+        "no-unused-vars":"error",
+        "no-restricted-syntax":"off"
     }
 }
